@@ -5,6 +5,7 @@ import (
 	"ivar/pkg/models"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
 
@@ -21,11 +22,15 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to the Chat Room!")
 }
 
-func handleConnections(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+func handlePing(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func handleConnections(c *gin.Context) {
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		fmt.Println(err)
-		return
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
 	defer conn.Close()
@@ -58,13 +63,15 @@ func handleMessages() {
 }
 
 func main() {
-	http.HandleFunc("/", homePage)
-	http.HandleFunc("/ws", handleConnections)
+	r := gin.Default()
+	r.GET("/ws", handleConnections)
+	r.GET("/ping", func(ctx *gin.Context) {
+		ctx.String(http.StatusOK, "pong")
+	})
 
 	go handleMessages()
 
-	fmt.Println("server started on :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := r.Run(":8080"); err != nil {
 		panic("error creating server: " + err.Error())
 	}
 }
