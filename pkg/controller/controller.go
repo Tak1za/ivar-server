@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"ivar/pkg/models"
+	"ivar/pkg/user"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,10 +13,12 @@ import (
 
 type Controller interface {
 	HandleConnections(c *gin.Context)
+	CreateUser(c *gin.Context)
 }
 
 type controller struct {
-	manager *models.Manager
+	manager     *models.Manager
+	userService *user.Service
 }
 
 var upgrader = websocket.Upgrader{
@@ -26,10 +29,23 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func New(manager *models.Manager) *controller {
+func New(manager *models.Manager, userService *user.Service) *controller {
 	return &controller{
-		manager: manager,
+		manager:     manager,
+		userService: userService,
 	}
+}
+
+func (c *controller) CreateUser(ctx *gin.Context) {
+	var user models.User
+	ctx.BindJSON(&user)
+
+	if err := c.userService.Create(user.ID, user.Username); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error creating user"})
+		return
+	}
+
+	ctx.Status(http.StatusCreated)
 }
 
 func (c *controller) HandleConnections(ctx *gin.Context) {
