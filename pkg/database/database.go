@@ -22,7 +22,7 @@ func NewStore(db *pgx.Conn) Store {
 }
 
 func (s *store) CreateUser(id, username string) error {
-	query := "insert into users (id, username) values (@id, @username)"
+	query := "insert into users (id, username) values (@id, @username) on conflict do nothing"
 	args := pgx.NamedArgs{
 		"id":       id,
 		"username": username,

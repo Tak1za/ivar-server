@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	uuid "github.com/satori/go.uuid"
 )
 
 type Controller interface {
@@ -49,13 +48,26 @@ func (c *controller) CreateUser(ctx *gin.Context) {
 }
 
 func (c *controller) HandleConnections(ctx *gin.Context) {
+	userId, _ := ctx.Params.Get("userId")
+	if userId == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "no user id provided"})
+		return
+	}
+
+	for client := range c.manager.Clients {
+		if client.Id == userId {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "connection already exists"})
+			return
+		}
+	}
+
 	conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
 		fmt.Println(err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	client := models.NewClient(uuid.Must(uuid.NewV4(), nil).String(), conn, make(chan []byte))
+	client := models.NewClient(userId, conn, make(chan []byte))
 	c.manager.Register <- client
 
 	go client.Read(c.manager)

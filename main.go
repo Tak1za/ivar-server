@@ -8,12 +8,19 @@ import (
 	"ivar/pkg/user"
 	"os"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 )
 
 func main() {
 	r := gin.Default()
+	r.Use(cors.New(cors.Config{
+		AllowWildcard: true,
+		AllowOrigins:  []string{"http://localhost*", "https://ivar-ui-*.vercel.app", "*"},
+		AllowMethods:  []string{"GET", "POST", "OPTIONS", "PUT"},
+		AllowHeaders:  []string{"*"},
+	}))
 
 	manager := models.Manager{
 		Broadcast:  make(chan []byte),
@@ -34,7 +41,7 @@ func main() {
 	userService := &user.Service{Store: store}
 
 	ctrl := controller.New(&manager, userService)
-	r.GET("/ws", ctrl.HandleConnections)
+	r.GET("/ws/:userId", ctrl.HandleConnections)
 	r.POST("/api/v1/users", ctrl.CreateUser)
 
 	if err := r.Run(":8080"); err != nil {
