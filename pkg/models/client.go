@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"log"
 
 	"github.com/gorilla/websocket"
 )
@@ -39,8 +40,13 @@ func (c *Client) Read(manager *Manager) {
 			break
 		}
 
-		jsonMessage, _ := json.Marshal(&Message{Sender: c.Id, Content: string(message)})
-		manager.Broadcast <- jsonMessage
+		var jsonMsg Message
+		if err := json.Unmarshal(message, &jsonMsg); err != nil {
+			log.Println("error converting message to correct format: " + err.Error())
+			return
+		}
+
+		manager.Broadcast <- message
 	}
 }
 

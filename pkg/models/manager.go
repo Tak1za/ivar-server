@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"log"
 )
 
 type Manager struct {
@@ -25,24 +26,33 @@ func (m *Manager) Start() {
 		select {
 		case conn := <-m.Register:
 			m.Clients[conn] = true
-			jsonMessage, _ := json.Marshal(&Message{
-				Content: "A new socket has connected.",
-			})
-			m.send(jsonMessage, conn)
 		case conn := <-m.Unregister:
 			if _, ok := m.Clients[conn]; ok {
 				close(conn.Send)
 				delete(m.Clients, conn)
-				jsonMessage, _ := json.Marshal(&Message{Content: "A socket has disconnected."})
-				m.send(jsonMessage, conn)
 			}
 		case msg := <-m.Broadcast:
-			for conn := range m.Clients {
-				select {
-				case conn.Send <- msg:
-				default:
-					close(conn.Send)
-					delete(m.Clients, conn)
+			var jsonMsg Message
+			if err := json.Unmarshal(msg, &jsonMsg); err != nil {
+				log.Println("error converting message to correct format: " + err.Error())
+				return
+			}
+			if jsonMsg.Recipient != "" {
+				var clientToSendTo Client
+				for client := range m.Clients {
+					if client.Id == jsonMsg.Recipient {
+						clientToSendTo = *client
+					}
+				}
+				clientToSendTo.Send <- msg
+			} else {
+				for conn := range m.Clients {
+					select {
+					case conn.Send <- msg:
+					default:
+						close(conn.Send)
+						delete(m.Clients, conn)
+					}
 				}
 			}
 		}
