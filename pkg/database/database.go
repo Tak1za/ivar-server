@@ -9,6 +9,9 @@ import (
 
 type Store interface {
 	CreateUser(id, username string) error
+	GetUser(name string) (string, string, error)
+	AddFriendRequest(userA, userB string) error
+	UpdateFriendRequest(id, status int) error
 }
 
 type store struct {
@@ -30,6 +33,49 @@ func (s *store) CreateUser(id, username string) error {
 	_, err := s.db.Exec(context.Background(), query, args)
 	if err != nil {
 		log.Println("unable to insert row: " + err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (s *store) GetUser(name string) (string, string, error) {
+	var (
+		id       string
+		username string
+	)
+	if err := s.db.QueryRow(context.Background(), "select id, username from users where username=$1", name).Scan(&id, &username); err != nil {
+		log.Println("unable to query row: " + err.Error())
+		return "", "", err
+	}
+
+	return id, username, nil
+}
+
+func (s *store) AddFriendRequest(userA, userB string) error {
+	query := "insert into friends (user_a, user_b) values (@userA, @userB)"
+	args := pgx.NamedArgs{
+		"userA": userA,
+		"userB": userB,
+	}
+
+	if _, err := s.db.Exec(context.Background(), query, args); err != nil {
+		log.Println("unable to insert row: " + err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (s *store) UpdateFriendRequest(id, status int) error {
+	query := "update friends set status = @status where id = @id"
+	args := pgx.NamedArgs{
+		"status": status,
+		"id":     id,
+	}
+
+	if _, err := s.db.Exec(context.Background(), query, args); err != nil {
+		log.Println("unable to update row: " + err.Error())
 		return err
 	}
 

@@ -43,6 +43,8 @@ func main() {
 	ctrl := controller.New(&manager, userService)
 	r.GET("/ws/:userId", ctrl.HandleConnections)
 	r.POST("/api/v1/users", ctrl.CreateUser)
+	r.POST("/api/v1/friends", ctrl.SendFriendRequest)
+	r.PUT("/api/v1/friends", ctrl.UpdateFriendRequest)
 
 	if err := r.Run(":8080"); err != nil {
 		panic("error creating server: " + err.Error())

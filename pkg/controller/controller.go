@@ -13,6 +13,8 @@ import (
 type Controller interface {
 	HandleConnections(c *gin.Context)
 	CreateUser(c *gin.Context)
+	SendFriendRequest(c *gin.Context)
+	UpdateFriendRequest(c *gin.Context)
 }
 
 type controller struct {
@@ -37,7 +39,10 @@ func New(manager *models.Manager, userService *user.Service) *controller {
 
 func (c *controller) CreateUser(ctx *gin.Context) {
 	var user models.User
-	ctx.BindJSON(&user)
+	if err := ctx.BindJSON(&user); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	if err := c.userService.Create(user.ID, user.Username); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error creating user"})
@@ -45,6 +50,36 @@ func (c *controller) CreateUser(ctx *gin.Context) {
 	}
 
 	ctx.Status(http.StatusCreated)
+}
+
+func (c *controller) SendFriendRequest(ctx *gin.Context) {
+	var friendRequest models.FriendRequest
+	if err := ctx.BindJSON(&friendRequest); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := c.userService.AddFriend(&friendRequest); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error adding friend request"})
+		return
+	}
+
+	ctx.Status(http.StatusOK)
+}
+
+func (c *controller) UpdateFriendRequest(ctx *gin.Context) {
+	var friendRequest models.UpdateFriendRequest
+	if err := ctx.BindJSON(&friendRequest); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := c.userService.UpdateFriend(&friendRequest); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating friend request"})
+		return
+	}
+
+	ctx.Status(http.StatusOK)
 }
 
 func (c *controller) HandleConnections(ctx *gin.Context) {
