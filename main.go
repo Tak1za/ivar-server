@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
@@ -31,11 +31,11 @@ func main() {
 
 	go manager.Start()
 
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	conn, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		panic("error connecting to database: " + err.Error())
 	}
-	defer conn.Close(context.Background())
+	defer conn.Close()
 
 	store := database.NewStore(conn)
 	userService := &user.Service{Store: store}
