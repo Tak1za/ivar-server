@@ -1,6 +1,10 @@
 package database
 
-import "github.com/stretchr/testify/mock"
+import (
+	"ivar/pkg/models"
+
+	"github.com/stretchr/testify/mock"
+)
 
 type MockStore struct {
 	mock.Mock
@@ -28,4 +32,10 @@ func (m *MockStore) UpdateFriendRequest(id, status int) error {
 	returnVals := m.Called(id, status)
 
 	return returnVals.Error(0)
+}
+
+func (m *MockStore) GetFriendRequests(userA string) ([]models.FriendRequest, error) {
+	returnVals := m.Called(userA)
+
+	return returnVals.Get(0).([]models.FriendRequest), returnVals.Error(1)
 }

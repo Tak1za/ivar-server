@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"ivar/pkg/models"
 	"log"
 
 	"github.com/jackc/pgx/v5"
@@ -12,6 +13,7 @@ type Store interface {
 	GetUser(name string) (string, string, error)
 	AddFriendRequest(userA, userB string) error
 	UpdateFriendRequest(id, status int) error
+	GetFriendRequests(userA string) ([]models.FriendRequest, error)
 }
 
 type store struct {
@@ -80,4 +82,15 @@ func (s *store) UpdateFriendRequest(id, status int) error {
 	}
 
 	return nil
+}
+
+func (s *store) GetFriendRequests(userA string) ([]models.FriendRequest, error) {
+	rows, _ := s.db.Query(context.Background(), "select id, user_a as userA, user_b as userB, status from friends where user_a = $1", userA)
+	friendRequests, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.FriendRequest])
+	if err != nil {
+		log.Println("unable to fetch rows: " + err.Error())
+		return []models.FriendRequest{}, err
+	}
+
+	return friendRequests, nil
 }

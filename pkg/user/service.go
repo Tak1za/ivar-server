@@ -28,8 +28,18 @@ func (s *Service) Get(name string) (*models.User, error) {
 	}, nil
 }
 
-func (s *Service) AddFriend(request *models.FriendRequest) error {
-	if err := s.Store.AddFriendRequest(request.UserA, request.UserB); err != nil {
+func (s *Service) AddFriend(request *models.AddFriendRequest) error {
+	userIdA, _, err := s.Store.GetUser(request.UserA)
+	if err != nil {
+		return err
+	}
+
+	userIdB, _, err := s.Store.GetUser(request.UserB)
+	if err != nil {
+		return err
+	}
+
+	if err := s.Store.AddFriendRequest(userIdA, userIdB); err != nil {
 		return err
 	}
 
@@ -42,4 +52,18 @@ func (s *Service) UpdateFriend(request *models.UpdateFriendRequest) error {
 	}
 
 	return nil
+}
+
+func (s *Service) GetFriendRequests(userA string) ([]models.FriendRequest, error) {
+	userIdA, _, err := s.Store.GetUser(userA)
+	if err != nil {
+		return nil, err
+	}
+
+	friendRequests, err := s.Store.GetFriendRequests(userIdA)
+	if err != nil {
+		return nil, err
+	}
+
+	return friendRequests, nil
 }

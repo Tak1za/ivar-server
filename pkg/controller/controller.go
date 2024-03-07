@@ -15,6 +15,7 @@ type Controller interface {
 	CreateUser(c *gin.Context)
 	SendFriendRequest(c *gin.Context)
 	UpdateFriendRequest(c *gin.Context)
+	GetFriendRequests(ctx *gin.Context)
 }
 
 type controller struct {
@@ -53,7 +54,7 @@ func (c *controller) CreateUser(ctx *gin.Context) {
 }
 
 func (c *controller) SendFriendRequest(ctx *gin.Context) {
-	var friendRequest models.FriendRequest
+	var friendRequest models.AddFriendRequest
 	if err := ctx.BindJSON(&friendRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -80,6 +81,18 @@ func (c *controller) UpdateFriendRequest(ctx *gin.Context) {
 	}
 
 	ctx.Status(http.StatusOK)
+}
+
+func (c *controller) GetFriendRequests(ctx *gin.Context) {
+	userA, _ := ctx.Params.Get("username")
+
+	friendRequests, err := c.userService.GetFriendRequests(userA)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting friend requests"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": friendRequests})
 }
 
 func (c *controller) HandleConnections(ctx *gin.Context) {

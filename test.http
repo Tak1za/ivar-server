@@ -36,3 +36,7 @@ Content-Type: application/json
     "id": 1,
     "status": 1
 }
+
+###
+
+GET http://localhost:8080/api/v1/friends/tak1za HTTP/1.1
