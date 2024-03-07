@@ -91,7 +91,7 @@ func (s *store) GetFriendRequests(userA string) ([]models.FriendRequest, error) 
 	f.user_a = fromUser.id
 	inner join users toUser on
 	f.user_b = toUser.id
-	where fromUser.username = $1`, userA)
+	where (fromUser.username = $1 or toUser.username = $2) and status = 2`, userA, userA)
 	friendRequests, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.FriendRequest])
 	if err != nil {
 		log.Println("unable to fetch rows: " + err.Error())
