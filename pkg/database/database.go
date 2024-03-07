@@ -85,7 +85,13 @@ func (s *store) UpdateFriendRequest(id, status int) error {
 }
 
 func (s *store) GetFriendRequests(userA string) ([]models.FriendRequest, error) {
-	rows, _ := s.db.Query(context.Background(), "select id, user_a as userA, user_b as userB, status from friends where user_a = $1", userA)
+	rows, _ := s.db.Query(context.Background(), `select f.id, fromUser.username as userA, toUser.username as userB, f.status
+	from friends f
+	inner join users fromUser on
+	f.user_a = fromUser.id
+	inner join users toUser on
+	f.user_b = toUser.id
+	where fromUser.username = $1`, userA)
 	friendRequests, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.FriendRequest])
 	if err != nil {
 		log.Println("unable to fetch rows: " + err.Error())

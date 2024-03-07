@@ -192,7 +192,6 @@ func TestService_UpdateFriendRequest_Failure(t *testing.T) {
 
 func TestService_GetFriendrequests_Success(t *testing.T) {
 	m := new(database.MockStore)
-	m.On("GetUser", "username1").Return("user1", "", nil)
 	m.On("GetFriendRequests", "user1").Return([]models.FriendRequest{{
 		ID:    1,
 		UserA: "user1",
@@ -202,7 +201,7 @@ func TestService_GetFriendrequests_Success(t *testing.T) {
 
 	s := Service{m}
 
-	_, err := s.GetFriendRequests("username1")
+	_, err := s.GetFriendRequests("user1")
 
 	m.AssertExpectations(t)
 
@@ -211,29 +210,13 @@ func TestService_GetFriendrequests_Success(t *testing.T) {
 	}
 }
 
-func TestService_GetFriendrequests_Failure_FetchingUser(t *testing.T) {
-	m := new(database.MockStore)
-	m.On("GetUser", "username1").Return("", "", errors.New("failed"))
-
-	s := Service{m}
-
-	_, err := s.GetFriendRequests("username1")
-
-	m.AssertExpectations(t)
-
-	if err.Error() != "failed" {
-		t.Errorf("error should be 'failed', got: %v", err)
-	}
-}
-
 func TestService_GetFriendrequests_Failure_GettingFriendRequests(t *testing.T) {
 	m := new(database.MockStore)
-	m.On("GetUser", "username1").Return("user1", "", nil)
 	m.On("GetFriendRequests", mock.AnythingOfType("string")).Return([]models.FriendRequest{}, errors.New("failed"))
 
 	s := Service{m}
 
-	_, err := s.GetFriendRequests("username1")
+	_, err := s.GetFriendRequests("user1")
 
 	m.AssertExpectations(t)
 

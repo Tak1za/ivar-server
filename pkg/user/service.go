@@ -55,12 +55,7 @@ func (s *Service) UpdateFriend(request *models.UpdateFriendRequest) error {
 }
 
 func (s *Service) GetFriendRequests(userA string) ([]models.FriendRequest, error) {
-	userIdA, _, err := s.Store.GetUser(userA)
-	if err != nil {
-		return nil, err
-	}
-
-	friendRequests, err := s.Store.GetFriendRequests(userIdA)
+	friendRequests, err := s.Store.GetFriendRequests(userA)
 	if err != nil {
 		return nil, err
 	}
