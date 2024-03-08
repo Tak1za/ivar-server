@@ -39,3 +39,9 @@ func (m *MockStore) GetFriendRequests(userA string) ([]models.FriendRequest, err
 
 	return returnVals.Get(0).([]models.FriendRequest), returnVals.Error(1)
 }
+
+func (m *MockStore) GetFriends(username string) ([]string, error) {
+	returnVals := m.Called(username)
+
+	return returnVals.Get(0).([]string), returnVals.Error(1)
+}

@@ -45,7 +45,8 @@ func main() {
 	r.POST("/api/v1/users", ctrl.CreateUser)
 	r.POST("/api/v1/friends", ctrl.SendFriendRequest)
 	r.PUT("/api/v1/friends", ctrl.UpdateFriendRequest)
-	r.GET("/api/v1/friends/:username", ctrl.GetFriendRequests)
+	r.GET("/api/v1/friends/requests/:username", ctrl.GetFriendRequests)
+	r.GET("/api/v1/friends/:username", ctrl.GetFriends)
 
 	if err := r.Run(":8080"); err != nil {
 		panic("error creating server: " + err.Error())

@@ -62,3 +62,12 @@ func (s *Service) GetFriendRequests(userA string) ([]models.FriendRequest, error
 
 	return friendRequests, nil
 }
+
+func (s *Service) GetFriends(username string) ([]string, error) {
+	friends, err := s.Store.GetFriends(username)
+	if err != nil {
+		return nil, err
+	}
+
+	return friends, nil
+}

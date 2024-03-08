@@ -95,6 +95,18 @@ func (c *controller) GetFriendRequests(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": friendRequests})
 }
 
+func (c *controller) GetFriends(ctx *gin.Context) {
+	userA, _ := ctx.Params.Get("username")
+
+	friends, err := c.userService.GetFriends(userA)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting friends"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": friends})
+}
+
 func (c *controller) HandleConnections(ctx *gin.Context) {
 	userId, _ := ctx.Params.Get("userId")
 	if userId == "" {

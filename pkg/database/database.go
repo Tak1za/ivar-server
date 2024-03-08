@@ -15,6 +15,7 @@ type Store interface {
 	AddFriendRequest(userA, userB string) error
 	UpdateFriendRequest(id, status int) error
 	GetFriendRequests(userA string) ([]models.FriendRequest, error)
+	GetFriends(username string) ([]string, error)
 }
 
 type store struct {
@@ -100,4 +101,25 @@ func (s *store) GetFriendRequests(userA string) ([]models.FriendRequest, error) 
 	}
 
 	return friendRequests, nil
+}
+
+func (s *store) GetFriends(username string) ([]string, error) {
+	rows, _ := s.db.Query(context.Background(), `select array_remove(array(select distinct unnest(array_agg(fromUser.username) || array_agg(toUser.username))), $1)
+	from friends f
+	inner join users fromUser on
+	f.user_a = fromUser.id
+	inner join users toUser on
+	f.user_b = toUser.id
+	where (fromUser.username = $1 or toUser.username = $1) and status = 1`, username)
+	friends, err := pgx.CollectOneRow(rows, func(row pgx.CollectableRow) ([]string, error) {
+		res := make([]string, 0)
+		err := row.Scan(&res)
+		return res, err
+	})
+	if err != nil {
+		log.Println("unable to fetch rows: ", err.Error())
+		return nil, err
+	}
+
+	return friends, nil
 }
