@@ -45,3 +45,9 @@ func (m *MockStore) GetFriends(username string) ([]string, error) {
 
 	return returnVals.Get(0).([]string), returnVals.Error(1)
 }
+
+func (m *MockStore) RemoveFriend(usernameA, usernameB string) error {
+	returnVals := m.Called(usernameA, usernameB)
+
+	return returnVals.Error(0)
+}

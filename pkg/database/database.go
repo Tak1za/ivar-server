@@ -16,6 +16,7 @@ type Store interface {
 	UpdateFriendRequest(id, status int) error
 	GetFriendRequests(userA string) ([]models.FriendRequest, error)
 	GetFriends(username string) ([]string, error)
+	RemoveFriend(usernameA, usernameB string) error
 }
 
 type store struct {
@@ -122,4 +123,27 @@ func (s *store) GetFriends(username string) ([]string, error) {
 	}
 
 	return friends, nil
+}
+
+func (s *store) RemoveFriend(usernameA, usernameB string) error {
+	query := `delete from friends as f 
+	using users as u, users as u2
+	where 
+	(u.username = @usernameA
+	and
+	(u.id = f.user_a or u.id = f.user_b))
+	and
+	(u2.username = @usernameB
+	and (u2.id = f.user_b or u2.id = f.user_b))`
+	args := pgx.NamedArgs{
+		"usernameA": usernameA,
+		"usernameB": usernameB,
+	}
+
+	if _, err := s.db.Exec(context.Background(), query, args); err != nil {
+		log.Println("unable to delete row: " + err.Error())
+		return err
+	}
+
+	return nil
 }

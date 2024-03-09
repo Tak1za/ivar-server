@@ -16,3 +16,8 @@ type FriendRequest struct {
 	UserB  string `json:"userB"`
 	Status int    `json:"status"`
 }
+
+type DeleteFriendRequest struct {
+	UsernameA string `json:"usernameA"`
+	UsernameB string `json:"usernameB"`
+}

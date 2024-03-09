@@ -16,6 +16,8 @@ type Controller interface {
 	SendFriendRequest(c *gin.Context)
 	UpdateFriendRequest(c *gin.Context)
 	GetFriendRequests(ctx *gin.Context)
+	GetFriends(ctx *gin.Context)
+	RemoveFriend(ctx *gin.Context)
 }
 
 type controller struct {
@@ -105,6 +107,21 @@ func (c *controller) GetFriends(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"data": friends})
+}
+
+func (c *controller) RemoveFriend(ctx *gin.Context) {
+	var deleteFriend models.DeleteFriendRequest
+	if err := ctx.BindJSON(&deleteFriend); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		return
+	}
+
+	if err := c.userService.RemoveFriend(deleteFriend.UsernameA, deleteFriend.UsernameB); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting friend"})
+		return
+	}
+
+	ctx.Status(http.StatusOK)
 }
 
 func (c *controller) HandleConnections(ctx *gin.Context) {

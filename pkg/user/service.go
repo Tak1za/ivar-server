@@ -71,3 +71,11 @@ func (s *Service) GetFriends(username string) ([]string, error) {
 
 	return friends, nil
 }
+
+func (s *Service) RemoveFriend(usernameA, usernameB string) error {
+	if err := s.Store.RemoveFriend(usernameA, usernameB); err != nil {
+		return err
+	}
+
+	return nil
+}
