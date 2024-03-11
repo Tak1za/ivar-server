@@ -41,13 +41,15 @@ func TestService_CreateUser_Failure(t *testing.T) {
 
 func TestService_AddFriendRequest_Success(t *testing.T) {
 	m := new(database.MockStore)
+	m.On("GetUser", "username1").Return("user1", "", nil)
+	m.On("GetUser", "username2").Return("user2", "", nil)
 	m.On("AddFriendRequest", "user1", "user2").Return(nil)
 
 	s := Service{m}
 
 	err := s.AddFriend(&models.AddFriendRequest{
-		UsernameA: "user1",
-		UsernameB: "user2",
+		UsernameA: "username1",
+		UsernameB: "username2",
 	})
 
 	m.AssertExpectations(t)
@@ -57,15 +59,54 @@ func TestService_AddFriendRequest_Success(t *testing.T) {
 	}
 }
 
-func TestService_AddFriendRequest_Failure(t *testing.T) {
+func TestService_AddFriendRequest_Failure_FetchingUserA(t *testing.T) {
 	m := new(database.MockStore)
+	m.On("GetUser", "username1").Return("", "", errors.New("failed"))
+
+	s := Service{m}
+
+	err := s.AddFriend(&models.AddFriendRequest{
+		UsernameA: "username1",
+		UsernameB: "username2",
+	})
+
+	m.AssertExpectations(t)
+
+	if err.Error() != "failed" {
+		t.Errorf("error should be 'failed', got: %v", err)
+	}
+}
+
+func TestService_AddFriendRequest_Failure_FetchingUserB(t *testing.T) {
+	m := new(database.MockStore)
+	m.On("GetUser", "username1").Return("user1", "", nil)
+	m.On("GetUser", "username2").Return("", "", errors.New("failed"))
+
+	s := Service{m}
+
+	err := s.AddFriend(&models.AddFriendRequest{
+		UsernameA: "username1",
+		UsernameB: "username2",
+	})
+
+	m.AssertExpectations(t)
+
+	if err.Error() != "failed" {
+		t.Errorf("error should be 'failed', got: %v", err)
+	}
+}
+
+func TestService_AddFriendRequest_Failure_SendingFriendRequest(t *testing.T) {
+	m := new(database.MockStore)
+	m.On("GetUser", "username1").Return("user1", "", nil)
+	m.On("GetUser", "username2").Return("user2", "", nil)
 	m.On("AddFriendRequest", "user1", "user2").Return(errors.New("failed"))
 
 	s := Service{m}
 
 	err := s.AddFriend(&models.AddFriendRequest{
-		UsernameA: "user1",
-		UsernameB: "user2",
+		UsernameA: "username1",
+		UsernameB: "username2",
 	})
 
 	m.AssertExpectations(t)
