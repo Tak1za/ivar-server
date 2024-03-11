@@ -1,8 +1,8 @@
 package models
 
 type AddFriendRequest struct {
-	UserA string `json:"userA"`
-	UserB string `json:"userB"`
+	UsernameA string `json:"usernameA"`
+	UsernameB string `json:"usernameB"`
 }
 
 type UpdateFriendRequest struct {
@@ -11,13 +11,13 @@ type UpdateFriendRequest struct {
 }
 
 type FriendRequest struct {
-	ID     int    `json:"id"`
-	UserA  string `json:"userA"`
-	UserB  string `json:"userB"`
-	Status int    `json:"status"`
+	ID     int  `json:"id"`
+	UserA  User `json:"userA"`
+	UserB  User `json:"userB"`
+	Status int  `json:"status"`
 }
 
-type DeleteFriendRequest struct {
-	UsernameA string `json:"usernameA"`
-	UsernameB string `json:"usernameB"`
+type RemoveFriendRequest struct {
+	CurrentUserId  string `json:"currentUserId"`
+	ToRemoveUserId string `json:"toRemoveUserId"`
 }

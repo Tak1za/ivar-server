@@ -86,9 +86,9 @@ func (c *controller) UpdateFriendRequest(ctx *gin.Context) {
 }
 
 func (c *controller) GetFriendRequests(ctx *gin.Context) {
-	userA, _ := ctx.Params.Get("username")
+	userId, _ := ctx.Params.Get("userId")
 
-	friendRequests, err := c.userService.GetFriendRequests(userA)
+	friendRequests, err := c.userService.GetFriendRequests(userId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting friend requests"})
 		return
@@ -98,9 +98,9 @@ func (c *controller) GetFriendRequests(ctx *gin.Context) {
 }
 
 func (c *controller) GetFriends(ctx *gin.Context) {
-	userA, _ := ctx.Params.Get("username")
+	userId, _ := ctx.Params.Get("userId")
 
-	friends, err := c.userService.GetFriends(userA)
+	friends, err := c.userService.GetFriends(userId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting friends"})
 		return
@@ -110,13 +110,13 @@ func (c *controller) GetFriends(ctx *gin.Context) {
 }
 
 func (c *controller) RemoveFriend(ctx *gin.Context) {
-	var deleteFriend models.DeleteFriendRequest
+	var deleteFriend models.RemoveFriendRequest
 	if err := ctx.BindJSON(&deleteFriend); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		return
 	}
 
-	if err := c.userService.RemoveFriend(deleteFriend.UsernameA, deleteFriend.UsernameB); err != nil {
+	if err := c.userService.RemoveFriend(deleteFriend.CurrentUserId, deleteFriend.ToRemoveUserId); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting friend"})
 		return
 	}
@@ -125,17 +125,10 @@ func (c *controller) RemoveFriend(ctx *gin.Context) {
 }
 
 func (c *controller) HandleConnections(ctx *gin.Context) {
-	userId, _ := ctx.Params.Get("userId")
-	if userId == "" {
+	withUser, _ := ctx.Params.Get("userId")
+	if withUser == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "no user id provided"})
 		return
-	}
-
-	for client := range c.manager.Clients {
-		if client.Id == userId {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "connection already exists"})
-			return
-		}
 	}
 
 	conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
@@ -144,7 +137,7 @@ func (c *controller) HandleConnections(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	client := models.NewClient(userId, conn, make(chan []byte))
+	client := models.NewClient(withUser, conn, make(chan []byte))
 	c.manager.Register <- client
 
 	go client.Read(c.manager)

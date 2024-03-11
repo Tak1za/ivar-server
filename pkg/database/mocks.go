@@ -40,10 +40,10 @@ func (m *MockStore) GetFriendRequests(userA string) ([]models.FriendRequest, err
 	return returnVals.Get(0).([]models.FriendRequest), returnVals.Error(1)
 }
 
-func (m *MockStore) GetFriends(username string) ([]string, error) {
-	returnVals := m.Called(username)
+func (m *MockStore) GetFriends(userId string) ([]models.User, error) {
+	returnVals := m.Called(userId)
 
-	return returnVals.Get(0).([]string), returnVals.Error(1)
+	return returnVals.Get(0).([]models.User), returnVals.Error(1)
 }
 
 func (m *MockStore) RemoveFriend(usernameA, usernameB string) error {

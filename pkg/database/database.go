@@ -12,11 +12,11 @@ import (
 type Store interface {
 	CreateUser(id, username string) error
 	GetUser(name string) (string, string, error)
-	AddFriendRequest(userA, userB string) error
+	AddFriendRequest(userIdA, userIdB string) error
 	UpdateFriendRequest(id, status int) error
-	GetFriendRequests(userA string) ([]models.FriendRequest, error)
-	GetFriends(username string) ([]string, error)
-	RemoveFriend(usernameA, usernameB string) error
+	GetFriendRequests(currentUserId string) ([]models.FriendRequest, error)
+	GetFriends(username string) ([]models.User, error)
+	RemoveFriend(currentUserId, toRemoveUserId string) error
 }
 
 type store struct {
@@ -57,11 +57,11 @@ func (s *store) GetUser(name string) (string, string, error) {
 	return id, username, nil
 }
 
-func (s *store) AddFriendRequest(userA, userB string) error {
+func (s *store) AddFriendRequest(userIdA, userIdB string) error {
 	query := "insert into friends (user_a, user_b) values (@userA, @userB)"
 	args := pgx.NamedArgs{
-		"userA": userA,
-		"userB": userB,
+		"userA": userIdA,
+		"userB": userIdB,
 	}
 
 	if _, err := s.db.Exec(context.Background(), query, args); err != nil {
@@ -87,14 +87,14 @@ func (s *store) UpdateFriendRequest(id, status int) error {
 	return nil
 }
 
-func (s *store) GetFriendRequests(userA string) ([]models.FriendRequest, error) {
-	rows, _ := s.db.Query(context.Background(), `select f.id, fromUser.username as userA, toUser.username as userB, f.status
+func (s *store) GetFriendRequests(currentUserId string) ([]models.FriendRequest, error) {
+	rows, _ := s.db.Query(context.Background(), `select f.id, jsonb_build_object('id', fromUser.id, 'username', fromUser.username) as userA, jsonb_build_object('id', toUser.id, 'username', toUser.username) as userB, f.status
 	from friends f
 	inner join users fromUser on
 	f.user_a = fromUser.id
 	inner join users toUser on
 	f.user_b = toUser.id
-	where (fromUser.username = $1 or toUser.username = $2) and status = 2`, userA, userA)
+	where (fromUser.id = $1 or toUser.id = $1) and status = 2`, currentUserId)
 	friendRequests, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.FriendRequest])
 	if err != nil {
 		log.Println("unable to fetch rows: " + err.Error())
@@ -104,16 +104,13 @@ func (s *store) GetFriendRequests(userA string) ([]models.FriendRequest, error) 
 	return friendRequests, nil
 }
 
-func (s *store) GetFriends(username string) ([]string, error) {
-	rows, _ := s.db.Query(context.Background(), `select array_remove(array(select distinct unnest(array_agg(fromUser.username) || array_agg(toUser.username))), $1)
-	from friends f
-	inner join users fromUser on
-	f.user_a = fromUser.id
-	inner join users toUser on
-	f.user_b = toUser.id
-	where (fromUser.username = $1 or toUser.username = $1) and status = 1`, username)
-	friends, err := pgx.CollectOneRow(rows, func(row pgx.CollectableRow) ([]string, error) {
-		res := make([]string, 0)
+func (s *store) GetFriends(userId string) ([]models.User, error) {
+	rows, _ := s.db.Query(context.Background(), `select json_agg(distinct jsonb_build_object('id', u.id, 'username', u.username)) from friends f
+	inner join users u
+	on u.id = f.user_a or u.id = f.user_b
+	where ((f.user_a = $1 or f.user_b = $1) and f.status = 1)`, userId)
+	friends, err := pgx.CollectOneRow(rows, func(row pgx.CollectableRow) ([]models.User, error) {
+		res := make([]models.User, 0)
 		err := row.Scan(&res)
 		return res, err
 	})
@@ -125,19 +122,24 @@ func (s *store) GetFriends(username string) ([]string, error) {
 	return friends, nil
 }
 
-func (s *store) RemoveFriend(usernameA, usernameB string) error {
-	query := `delete from friends as f 
-	using users as u, users as u2
-	where 
-	(u.username = @usernameA
-	and
-	(u.id = f.user_a or u.id = f.user_b))
-	and
-	(u2.username = @usernameB
-	and (u2.id = f.user_b or u2.id = f.user_b))`
+func (s *store) RemoveFriend(currentUserId, toRemoveUserId string) error {
+	query := `delete from
+	friends as f
+  	where
+	(
+	  f.user_a = @userA
+	  and 
+	  f.user_b = @userB
+	)
+	or
+	(
+	  f.user_a = @userB
+	  and 
+	  f.user_b = @userA
+	)`
 	args := pgx.NamedArgs{
-		"usernameA": usernameA,
-		"usernameB": usernameB,
+		"userA": currentUserId,
+		"userB": toRemoveUserId,
 	}
 
 	if _, err := s.db.Exec(context.Background(), query, args); err != nil {

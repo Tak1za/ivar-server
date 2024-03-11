@@ -3,6 +3,7 @@ package user
 import (
 	"ivar/pkg/database"
 	"ivar/pkg/models"
+	"slices"
 )
 
 type Service struct {
@@ -16,25 +17,13 @@ func (s *Service) Create(id, username string) error {
 	return nil
 }
 
-func (s *Service) Get(name string) (*models.User, error) {
-	id, username, err := s.Store.GetUser(name)
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.User{
-		ID:       id,
-		Username: username,
-	}, nil
-}
-
 func (s *Service) AddFriend(request *models.AddFriendRequest) error {
-	userIdA, _, err := s.Store.GetUser(request.UserA)
+	userIdA, _, err := s.Store.GetUser(request.UsernameA)
 	if err != nil {
 		return err
 	}
 
-	userIdB, _, err := s.Store.GetUser(request.UserB)
+	userIdB, _, err := s.Store.GetUser(request.UsernameB)
 	if err != nil {
 		return err
 	}
@@ -54,8 +43,8 @@ func (s *Service) UpdateFriend(request *models.UpdateFriendRequest) error {
 	return nil
 }
 
-func (s *Service) GetFriendRequests(userA string) ([]models.FriendRequest, error) {
-	friendRequests, err := s.Store.GetFriendRequests(userA)
+func (s *Service) GetFriendRequests(currentUserId string) ([]models.FriendRequest, error) {
+	friendRequests, err := s.Store.GetFriendRequests(currentUserId)
 	if err != nil {
 		return nil, err
 	}
@@ -63,17 +52,28 @@ func (s *Service) GetFriendRequests(userA string) ([]models.FriendRequest, error
 	return friendRequests, nil
 }
 
-func (s *Service) GetFriends(username string) ([]string, error) {
-	friends, err := s.Store.GetFriends(username)
+func (s *Service) GetFriends(userId string) ([]models.User, error) {
+	friends, err := s.Store.GetFriends(userId)
 	if err != nil {
 		return nil, err
 	}
 
-	return friends, nil
+	currentUserIndex := slices.IndexFunc(friends, func(friend models.User) bool {
+		return friend.ID == userId
+	})
+
+	if currentUserIndex == -1 {
+		return friends, nil
+	}
+
+	before := friends[:currentUserIndex]
+	after := friends[currentUserIndex+1:]
+
+	return append(before, after...), nil
 }
 
-func (s *Service) RemoveFriend(usernameA, usernameB string) error {
-	if err := s.Store.RemoveFriend(usernameA, usernameB); err != nil {
+func (s *Service) RemoveFriend(currentUserId, toRemoveUserId string) error {
+	if err := s.Store.RemoveFriend(currentUserId, toRemoveUserId); err != nil {
 		return err
 	}
 

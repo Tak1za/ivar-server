@@ -18,7 +18,7 @@ func main() {
 	r.Use(cors.New(cors.Config{
 		AllowWildcard: true,
 		AllowOrigins:  []string{"http://localhost*", "https://ivar-ui-*.vercel.app", "*"},
-		AllowMethods:  []string{"GET", "POST", "OPTIONS", "PUT"},
+		AllowMethods:  []string{"GET", "POST", "OPTIONS", "PUT", "DELETE"},
 		AllowHeaders:  []string{"*"},
 	}))
 
@@ -45,8 +45,8 @@ func main() {
 	r.POST("/api/v1/users", ctrl.CreateUser)
 	r.POST("/api/v1/friends", ctrl.SendFriendRequest)
 	r.PUT("/api/v1/friends", ctrl.UpdateFriendRequest)
-	r.GET("/api/v1/friends/requests/:username", ctrl.GetFriendRequests)
-	r.GET("/api/v1/friends/:username", ctrl.GetFriends)
+	r.GET("/api/v1/friends/requests/:userId", ctrl.GetFriendRequests)
+	r.GET("/api/v1/friends/:userId", ctrl.GetFriends)
 	r.DELETE("/api/v1/friends", ctrl.RemoveFriend)
 
 	if err := r.Run(":8080"); err != nil {
