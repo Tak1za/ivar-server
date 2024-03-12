@@ -125,8 +125,8 @@ func (c *controller) RemoveFriend(ctx *gin.Context) {
 }
 
 func (c *controller) HandleConnections(ctx *gin.Context) {
-	withUser, _ := ctx.Params.Get("userId")
-	if withUser == "" {
+	currentUser, _ := ctx.Params.Get("userId")
+	if currentUser == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "no user id provided"})
 		return
 	}
@@ -137,7 +137,7 @@ func (c *controller) HandleConnections(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	client := models.NewClient(withUser, conn, make(chan []byte))
+	client := models.NewClient(currentUser, conn, make(chan []byte))
 	c.manager.Register <- client
 
 	go client.Read(c.manager)
