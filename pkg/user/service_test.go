@@ -192,3 +192,83 @@ func TestService_GetFriendrequests_Failure_GettingFriendRequests(t *testing.T) {
 		t.Errorf("error should be 'failed', got: %v", err)
 	}
 }
+
+func TestService_GetFriends_Success(t *testing.T) {
+	m := new(database.MockStore)
+	m.On("GetFriends", "userId1").Return([]models.User{
+		{ID: "userId1", Username: "username1"},
+		{ID: "userId2", Username: "username2"},
+	}, nil)
+
+	s := Service{m}
+
+	_, err := s.GetFriends("userId1")
+
+	m.AssertExpectations(t)
+
+	if err != nil {
+		t.Errorf("error should be nil, got: %v", err)
+	}
+}
+
+func TestService_GetFriends_NoCurrentUser_Success(t *testing.T) {
+	m := new(database.MockStore)
+	m.On("GetFriends", "userId1").Return([]models.User{
+		{ID: "userId2", Username: "username2"},
+	}, nil)
+
+	s := Service{m}
+
+	_, err := s.GetFriends("userId1")
+
+	m.AssertExpectations(t)
+
+	if err != nil {
+		t.Errorf("error should be nil, got: %v", err)
+	}
+}
+
+func TestService_GetFriends_Failure(t *testing.T) {
+	m := new(database.MockStore)
+	m.On("GetFriends", "userId1").Return([]models.User{}, errors.New("failed"))
+
+	s := Service{m}
+
+	_, err := s.GetFriends("userId1")
+
+	m.AssertExpectations(t)
+
+	if err.Error() != "failed" {
+		t.Errorf("error should be 'failed', got: %v", err)
+	}
+}
+
+func TestService_RemoveFriend_Success(t *testing.T) {
+	m := new(database.MockStore)
+	m.On("RemoveFriend", "userId1", "userId2").Return(nil)
+
+	s := Service{m}
+
+	err := s.RemoveFriend("userId1", "userId2")
+
+	m.AssertExpectations(t)
+
+	if err != nil {
+		t.Errorf("error should be nil, got: %v", err)
+	}
+}
+
+func TestService_RemoveFriend_Failure(t *testing.T) {
+	m := new(database.MockStore)
+	m.On("RemoveFriend", "userId1", "userId2").Return(errors.New("failed"))
+
+	s := Service{m}
+
+	err := s.RemoveFriend("userId1", "userId2")
+
+	m.AssertExpectations(t)
+
+	if err.Error() != "failed" {
+		t.Errorf("error should be 'failed', got: %v", err)
+	}
+}
