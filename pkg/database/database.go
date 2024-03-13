@@ -17,6 +17,7 @@ type Store interface {
 	GetFriendRequests(currentUserId string) ([]models.FriendRequest, error)
 	GetFriends(username string) ([]models.User, error)
 	RemoveFriend(currentUserId, toRemoveUserId string) error
+	GetChatInfo(users []string) (models.ChatInfo, error)
 }
 
 type store struct {
@@ -148,4 +149,16 @@ func (s *store) RemoveFriend(currentUserId, toRemoveUserId string) error {
 	}
 
 	return nil
+}
+
+func (s *store) GetChatInfo(users []string) (models.ChatInfo, error) {
+	rows, _ := s.db.Query(context.Background(), "select id, username from users where id = any($1)", users)
+
+	userDetails, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.User])
+	if err != nil {
+		log.Println("unable to fetch rows: " + err.Error())
+		return models.ChatInfo{}, err
+	}
+
+	return models.ChatInfo{Users: userDetails}, nil
 }

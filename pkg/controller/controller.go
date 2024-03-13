@@ -18,6 +18,7 @@ type Controller interface {
 	GetFriendRequests(ctx *gin.Context)
 	GetFriends(ctx *gin.Context)
 	RemoveFriend(ctx *gin.Context)
+	GetChatInfo(ctx *gin.Context)
 }
 
 type controller struct {
@@ -122,6 +123,22 @@ func (c *controller) RemoveFriend(ctx *gin.Context) {
 	}
 
 	ctx.Status(http.StatusOK)
+}
+
+func (c *controller) GetChatInfo(ctx *gin.Context) {
+	var chatInfoRequest models.ChatInfoRequest
+	if err := ctx.BindJSON(&chatInfoRequest); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		return
+	}
+
+	chatInfo, err := c.userService.GetChatInfo(chatInfoRequest.Users)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting chat info"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": chatInfo})
 }
 
 func (c *controller) HandleConnections(ctx *gin.Context) {

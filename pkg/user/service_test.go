@@ -272,3 +272,36 @@ func TestService_RemoveFriend_Failure(t *testing.T) {
 		t.Errorf("error should be 'failed', got: %v", err)
 	}
 }
+
+func TestService_GetChatInfo_Success(t *testing.T) {
+	m := new(database.MockStore)
+	m.On("GetChatInfo", []string{"user1", "user2"}).Return(models.ChatInfo{Users: []models.User{
+		{ID: "user1", Username: "username1"},
+		{ID: "user2", Username: "username2"},
+	}}, nil)
+
+	s := Service{m}
+
+	_, err := s.GetChatInfo([]string{"user1", "user2"})
+
+	m.AssertExpectations(t)
+
+	if err != nil {
+		t.Errorf("error should be nil, got: %v", err)
+	}
+}
+
+func TestService_GetChatInfo_Failure(t *testing.T) {
+	m := new(database.MockStore)
+	m.On("GetChatInfo", []string{"user1", "user2"}).Return(models.ChatInfo{}, errors.New("failed"))
+
+	s := Service{m}
+
+	_, err := s.GetChatInfo([]string{"user1", "user2"})
+
+	m.AssertExpectations(t)
+
+	if err.Error() != "failed" {
+		t.Errorf("error should be 'failed', got: %v", err)
+	}
+}

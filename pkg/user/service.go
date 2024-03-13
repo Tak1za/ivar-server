@@ -79,3 +79,12 @@ func (s *Service) RemoveFriend(currentUserId, toRemoveUserId string) error {
 
 	return nil
 }
+
+func (s *Service) GetChatInfo(users []string) (models.ChatInfo, error) {
+	chatInfo, err := s.Store.GetChatInfo(users)
+	if err != nil {
+		return models.ChatInfo{}, err
+	}
+
+	return chatInfo, nil
+}

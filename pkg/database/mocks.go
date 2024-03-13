@@ -51,3 +51,9 @@ func (m *MockStore) RemoveFriend(usernameA, usernameB string) error {
 
 	return returnVals.Error(0)
 }
+
+func (m *MockStore) GetChatInfo(users []string) (models.ChatInfo, error) {
+	returnVals := m.Called(users)
+
+	return returnVals.Get(0).(models.ChatInfo), returnVals.Error(1)
+}
