@@ -57,3 +57,9 @@ func (m *MockStore) GetChatInfo(users []string) (models.ChatInfo, error) {
 
 	return returnVals.Get(0).(models.ChatInfo), returnVals.Error(1)
 }
+
+func (m *MockStore) StoreMessage(message models.Message) error {
+	returnVals := m.Called(message)
+
+	return returnVals.Error(0)
+}

@@ -1,13 +1,13 @@
 package models
 
 type AddFriendRequest struct {
-	UsernameA string `json:"usernameA"`
-	UsernameB string `json:"usernameB"`
+	UsernameA string `json:"usernameA" binding:"required"`
+	UsernameB string `json:"usernameB" binding:"required"`
 }
 
 type UpdateFriendRequest struct {
-	ID     int `json:"id"`
-	Status int `json:"status"`
+	ID     int `json:"id" binding:"required"`
+	Status int `json:"status" binding:"required"`
 }
 
 type FriendRequest struct {
@@ -18,6 +18,6 @@ type FriendRequest struct {
 }
 
 type RemoveFriendRequest struct {
-	CurrentUserId  string `json:"currentUserId"`
-	ToRemoveUserId string `json:"toRemoveUserId"`
+	CurrentUserId  string `json:"currentUserId" binding:"required"`
+	ToRemoveUserId string `json:"toRemoveUserId" binding:"required"`
 }

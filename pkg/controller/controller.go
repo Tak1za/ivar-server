@@ -19,6 +19,7 @@ type Controller interface {
 	GetFriends(ctx *gin.Context)
 	RemoveFriend(ctx *gin.Context)
 	GetChatInfo(ctx *gin.Context)
+	AddMessage(ctx *gin.Context)
 }
 
 type controller struct {
@@ -139,6 +140,21 @@ func (c *controller) GetChatInfo(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"data": chatInfo})
+}
+
+func (c *controller) AddMessage(ctx *gin.Context) {
+	var message models.Message
+	if err := ctx.BindJSON(&message); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		return
+	}
+
+	if err := c.userService.Store.StoreMessage(message); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.Status(http.StatusOK)
 }
 
 func (c *controller) HandleConnections(ctx *gin.Context) {

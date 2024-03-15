@@ -5,5 +5,5 @@ type ChatInfo struct {
 }
 
 type ChatInfoRequest struct {
-	Users []string `json:"users"`
+	Users []string `json:"users" binding:"required"`
 }

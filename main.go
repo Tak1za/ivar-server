@@ -49,6 +49,7 @@ func main() {
 	r.GET("/api/v1/friends/:userId", ctrl.GetFriends)
 	r.DELETE("/api/v1/friends", ctrl.RemoveFriend)
 	r.POST("/api/v1/chats/info", ctrl.GetChatInfo)
+	r.POST("/api/v1/messages", ctrl.AddMessage)
 
 	if err := r.Run(":8080"); err != nil {
 		panic("error creating server: " + err.Error())

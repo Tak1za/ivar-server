@@ -88,3 +88,11 @@ func (s *Service) GetChatInfo(users []string) (models.ChatInfo, error) {
 
 	return chatInfo, nil
 }
+
+func (s *Service) AddMessage(message models.Message) error {
+	if err := s.Store.StoreMessage(message); err != nil {
+		return err
+	}
+
+	return nil
+}

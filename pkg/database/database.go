@@ -18,6 +18,7 @@ type Store interface {
 	GetFriends(username string) ([]models.User, error)
 	RemoveFriend(currentUserId, toRemoveUserId string) error
 	GetChatInfo(users []string) (models.ChatInfo, error)
+	StoreMessage(message models.Message) error
 }
 
 type store struct {
@@ -161,4 +162,20 @@ func (s *store) GetChatInfo(users []string) (models.ChatInfo, error) {
 	}
 
 	return models.ChatInfo{Users: userDetails}, nil
+}
+
+func (s *store) StoreMessage(message models.Message) error {
+	query := "insert into messages (sender_id, recipient_id, content) values (@senderId, @recipientId, @content)"
+	args := pgx.NamedArgs{
+		"senderId":    message.Sender,
+		"recipientId": message.Recipient,
+		"content":     message.Content,
+	}
+
+	if _, err := s.db.Exec(context.Background(), query, args); err != nil {
+		log.Println("unable to insert row: " + err.Error())
+		return err
+	}
+
+	return nil
 }

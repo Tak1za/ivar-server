@@ -1,7 +1,9 @@
 package models
 
 type Message struct {
-	Sender    string `json:"sender"`
-	Recipient string `json:"recipient"`
-	Content   string `json:"content"`
+	ID        int64  `json:"id"`
+	Timestamp string `json:"timestamp"`
+	Sender    string `json:"sender" binding:"required"`
+	Recipient string `json:"recipient" binding:"required"`
+	Content   string `json:"content" binding:"required"`
 }
