@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"ivar/pkg/models"
 	"ivar/pkg/user"
 	"net/http"
@@ -11,7 +10,6 @@ import (
 )
 
 type Controller interface {
-	HandleConnections(c *gin.Context)
 	CreateUser(c *gin.Context)
 	SendFriendRequest(c *gin.Context)
 	UpdateFriendRequest(c *gin.Context)
@@ -23,7 +21,6 @@ type Controller interface {
 }
 
 type controller struct {
-	manager     *models.Manager
 	userService *user.Service
 }
 
@@ -35,9 +32,8 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func New(manager *models.Manager, userService *user.Service) *controller {
+func New(userService *user.Service) *controller {
 	return &controller{
-		manager:     manager,
 		userService: userService,
 	}
 }
@@ -155,24 +151,4 @@ func (c *controller) AddMessage(ctx *gin.Context) {
 	}
 
 	ctx.Status(http.StatusOK)
-}
-
-func (c *controller) HandleConnections(ctx *gin.Context) {
-	currentUser, _ := ctx.Params.Get("userId")
-	if currentUser == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "no user id provided"})
-		return
-	}
-
-	conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
-	if err != nil {
-		fmt.Println(err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	}
-
-	client := models.NewClient(currentUser, conn, make(chan []byte))
-	c.manager.Register <- client
-
-	go client.Read(c.manager)
-	go client.Write()
 }
