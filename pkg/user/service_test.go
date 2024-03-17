@@ -5,6 +5,7 @@ import (
 	"ivar/pkg/database"
 	"ivar/pkg/models"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -279,6 +280,7 @@ func TestService_GetChatInfo_Success(t *testing.T) {
 		{ID: "user1", Username: "username1"},
 		{ID: "user2", Username: "username2"},
 	}}, nil)
+	m.On("RetrieveMessages", []string{"user1", "user2"}).Return([]models.Message{{ID: 1, Timestamp: time.Now(), Sender: "user1", Recipient: "user2"}}, nil)
 
 	s := Service{m}
 
@@ -294,7 +296,24 @@ func TestService_GetChatInfo_Success(t *testing.T) {
 func TestService_GetChatInfo_Failure(t *testing.T) {
 	m := new(database.MockStore)
 	m.On("GetChatInfo", []string{"user1", "user2"}).Return(models.ChatInfo{}, errors.New("failed"))
+	s := Service{m}
 
+	_, err := s.GetChatInfo([]string{"user1", "user2"})
+
+	m.AssertExpectations(t)
+
+	if err.Error() != "failed" {
+		t.Errorf("error should be 'failed', got: %v", err)
+	}
+}
+
+func TestService_GetChatInfo_FailsToFetchMessages_Failure(t *testing.T) {
+	m := new(database.MockStore)
+	m.On("GetChatInfo", []string{"user1", "user2"}).Return(models.ChatInfo{Users: []models.User{
+		{ID: "user1", Username: "username1"},
+		{ID: "user2", Username: "username2"},
+	}}, nil)
+	m.On("RetrieveMessages", []string{"user1", "user2"}).Return([]models.Message{}, errors.New("failed"))
 	s := Service{m}
 
 	_, err := s.GetChatInfo([]string{"user1", "user2"})
