@@ -63,3 +63,9 @@ func (m *MockStore) StoreMessage(message models.Message) error {
 
 	return returnVals.Error(0)
 }
+
+func (m *MockStore) RetrieveMessages(users []string) ([]models.Message, error) {
+	returnVals := m.Called(users)
+
+	return returnVals.Get(0).([]models.Message), returnVals.Error(1)
+}

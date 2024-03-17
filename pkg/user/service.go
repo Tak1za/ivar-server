@@ -86,5 +86,11 @@ func (s *Service) GetChatInfo(users []string) (models.ChatInfo, error) {
 		return models.ChatInfo{}, err
 	}
 
+	chatMessages, err := s.Store.RetrieveMessages(users)
+	if err != nil {
+		return models.ChatInfo{}, err
+	}
+	chatInfo.Messages = chatMessages
+
 	return chatInfo, nil
 }

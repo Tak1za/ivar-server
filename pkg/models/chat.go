@@ -1,7 +1,8 @@
 package models
 
 type ChatInfo struct {
-	Users []User `json:"users"`
+	Users    []User    `json:"users"`
+	Messages []Message `json:"messages"`
 }
 
 type ChatInfoRequest struct {

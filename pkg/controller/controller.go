@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"ivar/pkg/chat"
 	"ivar/pkg/models"
 	"ivar/pkg/user"
 	"net/http"
@@ -18,10 +19,12 @@ type Controller interface {
 	RemoveFriend(ctx *gin.Context)
 	GetChatInfo(ctx *gin.Context)
 	AddMessage(ctx *gin.Context)
+	GetMessages(ctx *gin.Context)
 }
 
 type controller struct {
 	userService *user.Service
+	chatService *chat.Service
 }
 
 var upgrader = websocket.Upgrader{
@@ -32,9 +35,10 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func New(userService *user.Service) *controller {
+func New(userService *user.Service, chatService *chat.Service) *controller {
 	return &controller{
 		userService: userService,
+		chatService: chatService,
 	}
 }
 
@@ -145,7 +149,7 @@ func (c *controller) AddMessage(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.userService.Store.StoreMessage(message); err != nil {
+	if err := c.chatService.AddMessage(message); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

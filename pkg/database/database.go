@@ -19,6 +19,7 @@ type Store interface {
 	RemoveFriend(currentUserId, toRemoveUserId string) error
 	GetChatInfo(users []string) (models.ChatInfo, error)
 	StoreMessage(message models.Message) error
+	RetrieveMessages(users []string) ([]models.Message, error)
 }
 
 type store struct {
@@ -178,4 +179,15 @@ func (s *store) StoreMessage(message models.Message) error {
 	}
 
 	return nil
+}
+
+func (s *store) RetrieveMessages(users []string) ([]models.Message, error) {
+	rows, _ := s.db.Query(context.Background(), `select id, timestamp, content, sender_id as sender, recipient_id as recipient from messages m where (sender_id = $1 or recipient_id = $1) and (sender_id = $2 or recipient_id = $2) order by timestamp desc`, users[0], users[1])
+	messages, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Message])
+	if err != nil {
+		log.Println("unable to fetch rows: " + err.Error())
+		return []models.Message{}, err
+	}
+
+	return messages, nil
 }

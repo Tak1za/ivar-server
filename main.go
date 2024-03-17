@@ -186,7 +186,7 @@ func main() {
 
 	go manager.Start()
 
-	ctrl := controller.New(userService)
+	ctrl := controller.New(userService, chatService)
 	r.GET("/ws/:userId", HandleConnections)
 	r.POST("/api/v1/users", ctrl.CreateUser)
 	r.POST("/api/v1/friends", ctrl.SendFriendRequest)
