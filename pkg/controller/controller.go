@@ -20,6 +20,7 @@ type Controller interface {
 	GetChatInfo(ctx *gin.Context)
 	AddMessage(ctx *gin.Context)
 	GetMessages(ctx *gin.Context)
+	GetAllChats(ctx *gin.Context)
 }
 
 type controller struct {
@@ -155,4 +156,16 @@ func (c *controller) AddMessage(ctx *gin.Context) {
 	}
 
 	ctx.Status(http.StatusOK)
+}
+
+func (c *controller) GetAllChats(ctx *gin.Context) {
+	userId, _ := ctx.Params.Get("userId")
+
+	chats, err := c.chatService.GetAllChats(userId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting chats"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": chats})
 }

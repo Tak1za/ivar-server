@@ -53,3 +53,7 @@ Content-Type: application/json
 {
     "users": ["user_2dH4nKcIiL0whKl85llyUJJXEfp", "user_2dBLjpFMyXcxvh8jXIX0Yb4vRQ9"]
 }
+
+###
+
+GET http://localhost:8080/api/v1/chats/user_2dHrzfkx28cy8zPRENC4OZ1qMmY HTTP/1.1

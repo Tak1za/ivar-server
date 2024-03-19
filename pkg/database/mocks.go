@@ -69,3 +69,9 @@ func (m *MockStore) RetrieveMessages(users []string) ([]models.Message, error) {
 
 	return returnVals.Get(0).([]models.Message), returnVals.Error(1)
 }
+
+func (m *MockStore) AllChats(userId string) ([]models.User, error) {
+	returnVals := m.Called(userId)
+
+	return returnVals.Get(0).([]models.User), returnVals.Error(1)
+}

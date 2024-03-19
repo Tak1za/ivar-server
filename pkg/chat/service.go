@@ -16,3 +16,12 @@ func (s *Service) AddMessage(message models.Message) error {
 
 	return nil
 }
+
+func (s *Service) GetAllChats(userId string) ([]models.User, error) {
+	users, err := s.Store.AllChats(userId)
+	if err != nil {
+		return []models.User{}, err
+	}
+
+	return users, nil
+}

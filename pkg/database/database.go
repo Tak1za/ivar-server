@@ -20,6 +20,7 @@ type Store interface {
 	GetChatInfo(users []string) (models.ChatInfo, error)
 	StoreMessage(message models.Message) error
 	RetrieveMessages(users []string) ([]models.Message, error)
+	AllChats(userId string) ([]models.User, error)
 }
 
 type store struct {
@@ -190,4 +191,31 @@ func (s *store) RetrieveMessages(users []string) ([]models.Message, error) {
 	}
 
 	return messages, nil
+}
+
+func (s *store) AllChats(userId string) ([]models.User, error) {
+	rows, _ := s.db.Query(context.Background(), `select
+	json_agg(
+	  	distinct jsonb_build_object('id', u.id, 'username', u.username)
+	)
+  	from
+		messages m
+		inner join 
+		users u
+		on 
+		u.id = m.sender_id 
+		or
+		u.id = m.recipient_id
+  	where (m.sender_id = $1 or m.recipient_id = $1) and u.id <> $1`, userId)
+	chats, err := pgx.CollectOneRow(rows, func(row pgx.CollectableRow) ([]models.User, error) {
+		res := make([]models.User, 0)
+		err := row.Scan(&res)
+		return res, err
+	})
+	if err != nil {
+		log.Println("unable to fetch rows: ", err.Error())
+		return nil, err
+	}
+
+	return chats, nil
 }
