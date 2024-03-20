@@ -60,7 +60,9 @@ func (m *Manager) Start() {
 						clientToSendTo = *client
 					}
 				}
-				clientToSendTo.Send <- msg
+				if clientToSendTo.Id != "" {
+					clientToSendTo.Send <- msg
+				}
 			} else {
 				for conn := range m.Clients {
 					select {
