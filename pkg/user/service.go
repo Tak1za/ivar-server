@@ -4,6 +4,7 @@ import (
 	"ivar/pkg/database"
 	"ivar/pkg/models"
 	"slices"
+	"strings"
 )
 
 type Service struct {
@@ -18,12 +19,12 @@ func (s *Service) Create(id, username string) error {
 }
 
 func (s *Service) AddFriend(request *models.AddFriendRequest) error {
-	userIdA, _, err := s.Store.GetUser(request.UsernameA)
+	userIdA, _, err := s.Store.GetUser(strings.ToLower(request.UsernameA))
 	if err != nil {
 		return err
 	}
 
-	userIdB, _, err := s.Store.GetUser(request.UsernameB)
+	userIdB, _, err := s.Store.GetUser(strings.ToLower(request.UsernameB))
 	if err != nil {
 		return err
 	}
