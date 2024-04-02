@@ -18,6 +18,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	_ "net/http/pprof"
+
+	"github.com/pkg/profile"
 )
 
 type Manager struct {
@@ -135,8 +139,8 @@ func (c *Client) Write() {
 }
 
 var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024 * 1024 * 1024,
-	WriteBufferSize: 1024 * 1024 * 1024,
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
 		return true
 	},
@@ -168,14 +172,13 @@ func HandleConnections(ctx *gin.Context) {
 }
 
 func main() {
-	r := gin.New()
+	r := gin.Default()
 	allowedOriginsFromEnv := os.Getenv("ALLOWED_ORIGINS")
 	allowedOrigins := strings.Split(allowedOriginsFromEnv, ",")
 	r.Use(cors.New(cors.Config{
-		AllowWildcard: true,
-		AllowOrigins:  allowedOrigins,
-		AllowMethods:  []string{"GET", "POST", "OPTIONS", "PUT", "DELETE"},
-		AllowHeaders:  []string{"*"},
+		AllowOrigins: allowedOrigins,
+		AllowMethods: []string{"GET", "POST", "OPTIONS", "PUT", "DELETE"},
+		AllowHeaders: []string{"*"},
 	}))
 
 	conn, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
@@ -201,6 +204,15 @@ func main() {
 	r.DELETE("/api/v1/friends", ctrl.RemoveFriend)
 	r.POST("/api/v1/chats/info", ctrl.GetChatInfo)
 	r.GET("/api/v1/chats/:userId", ctrl.GetAllChats)
+	defer profile.Start(profile.MemProfile).Stop()
+
+	go func() {
+		log.Printf("Starting Server! \t Go to http://localhost:6060/debug/pprof/\n")
+		err := http.ListenAndServe(":6060", nil)
+		if err != nil {
+			log.Printf("Failed to start the server! Error: %v", err)
+		}
+	}()
 
 	if err := r.Run(":8080"); err != nil {
 		panic("error creating server: " + err.Error())
