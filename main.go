@@ -168,7 +168,7 @@ func HandleConnections(ctx *gin.Context) {
 }
 
 func main() {
-	r := gin.Default()
+	r := gin.New()
 	allowedOriginsFromEnv := os.Getenv("ALLOWED_ORIGINS")
 	allowedOrigins := strings.Split(allowedOriginsFromEnv, ",")
 	r.Use(cors.New(cors.Config{
