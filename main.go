@@ -18,10 +18,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
-
-	_ "net/http/pprof"
-
-	"github.com/pkg/profile"
 )
 
 type Manager struct {
@@ -204,15 +200,6 @@ func main() {
 	r.DELETE("/api/v1/friends", ctrl.RemoveFriend)
 	r.POST("/api/v1/chats/info", ctrl.GetChatInfo)
 	r.GET("/api/v1/chats/:userId", ctrl.GetAllChats)
-	defer profile.Start(profile.MemProfile).Stop()
-
-	go func() {
-		log.Printf("Starting Server! \t Go to http://localhost:6060/debug/pprof/\n")
-		err := http.ListenAndServe(":6060", nil)
-		if err != nil {
-			log.Printf("Failed to start the server! Error: %v", err)
-		}
-	}()
 
 	if err := r.Run(":8080"); err != nil {
 		panic("error creating server: " + err.Error())
