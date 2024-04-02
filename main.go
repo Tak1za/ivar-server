@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -168,9 +169,11 @@ func HandleConnections(ctx *gin.Context) {
 
 func main() {
 	r := gin.Default()
+	allowedOriginsFromEnv := os.Getenv("ALLOWED_ORIGINS")
+	allowedOrigins := strings.Split(allowedOriginsFromEnv, ",")
 	r.Use(cors.New(cors.Config{
 		AllowWildcard: true,
-		AllowOrigins:  []string{"http://localhost*", "https://ivar-ui-*.vercel.app", "*"},
+		AllowOrigins:  allowedOrigins,
 		AllowMethods:  []string{"GET", "POST", "OPTIONS", "PUT", "DELETE"},
 		AllowHeaders:  []string{"*"},
 	}))
