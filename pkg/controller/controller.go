@@ -3,6 +3,7 @@ package controller
 import (
 	"ivar/pkg/chat"
 	"ivar/pkg/models"
+	"ivar/pkg/server"
 	"ivar/pkg/user"
 	"net/http"
 
@@ -21,11 +22,13 @@ type Controller interface {
 	AddMessage(ctx *gin.Context)
 	GetMessages(ctx *gin.Context)
 	GetAllChats(ctx *gin.Context)
+	CreateServer(ctx *gin.Context)
 }
 
 type controller struct {
-	userService *user.Service
-	chatService *chat.Service
+	userService   *user.Service
+	chatService   *chat.Service
+	serverService *server.Service
 }
 
 var upgrader = websocket.Upgrader{
@@ -36,11 +39,27 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func New(userService *user.Service, chatService *chat.Service) *controller {
+func New(userService *user.Service, chatService *chat.Service, serverService *server.Service) *controller {
 	return &controller{
-		userService: userService,
-		chatService: chatService,
+		userService:   userService,
+		chatService:   chatService,
+		serverService: serverService,
 	}
+}
+
+func (c *controller) CreateServer(ctx *gin.Context) {
+	var server models.Server
+	if err := ctx.BindJSON(&server); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := c.serverService.CreateServer(server.Name, server.OwnerID); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error creating server"})
+		return
+	}
+
+	ctx.Status(http.StatusCreated)
 }
 
 func (c *controller) CreateUser(ctx *gin.Context) {

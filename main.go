@@ -8,6 +8,7 @@ import (
 	"ivar/pkg/controller"
 	"ivar/pkg/database"
 	"ivar/pkg/models"
+	"ivar/pkg/server"
 	"ivar/pkg/user"
 	"log"
 	"net/http"
@@ -185,12 +186,13 @@ func main() {
 
 	store := database.NewStore(conn)
 	userService := &user.Service{Store: store}
+	serverService := &server.Service{Store: store}
 	chatService := &chat.Service{Store: store}
 	manager.ChatService = chatService
 
 	go manager.Start()
 
-	ctrl := controller.New(userService, chatService)
+	ctrl := controller.New(userService, chatService, serverService)
 	r.GET("/ws/:userId", HandleConnections)
 	r.POST("/api/v1/users", ctrl.CreateUser)
 	r.POST("/api/v1/friends", ctrl.SendFriendRequest)
@@ -200,6 +202,7 @@ func main() {
 	r.DELETE("/api/v1/friends", ctrl.RemoveFriend)
 	r.POST("/api/v1/chats/info", ctrl.GetChatInfo)
 	r.GET("/api/v1/chats/:userId", ctrl.GetAllChats)
+	r.POST("/api/v1/servers", ctrl.CreateServer)
 
 	if err := r.Run(":8080"); err != nil {
 		panic("error creating server: " + err.Error())

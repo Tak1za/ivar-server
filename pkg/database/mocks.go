@@ -75,3 +75,9 @@ func (m *MockStore) AllChats(userId string) ([]models.User, error) {
 
 	return returnVals.Get(0).([]models.User), returnVals.Error(1)
 }
+
+func (m *MockStore) CreateServer(name, userId string) error {
+	returnVals := m.Called(name, userId)
+
+	return returnVals.Error(0)
+}

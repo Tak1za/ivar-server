@@ -21,6 +21,7 @@ type Store interface {
 	StoreMessage(message models.Message) error
 	RetrieveMessages(users []string) ([]models.Message, error)
 	AllChats(userId string) ([]models.User, error)
+	CreateServer(name, userId string) error
 }
 
 type store struct {
@@ -31,6 +32,21 @@ func NewStore(db *pgxpool.Pool) Store {
 	return &store{
 		db: db,
 	}
+}
+
+func (s *store) CreateServer(name, userId string) error {
+	query := "insert into servers (name, owner) values (@name, @owner) on conflict do nothing"
+	args := pgx.NamedArgs{
+		"name":  name,
+		"owner": userId,
+	}
+	_, err := s.db.Exec(context.Background(), query, args)
+	if err != nil {
+		log.Println("unable to insert row: " + err.Error())
+		return err
+	}
+
+	return nil
 }
 
 func (s *store) CreateUser(id, username string) error {
