@@ -81,3 +81,9 @@ func (m *MockStore) CreateServer(name, userId string) error {
 
 	return returnVals.Error(0)
 }
+
+func (m *MockStore) GetServers() ([]models.Server, error) {
+	returnVals := m.Called()
+
+	return returnVals.Get(0).([]models.Server), returnVals.Error(1)
+}

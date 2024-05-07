@@ -22,6 +22,7 @@ type Store interface {
 	RetrieveMessages(users []string) ([]models.Message, error)
 	AllChats(userId string) ([]models.User, error)
 	CreateServer(name, userId string) error
+	GetServers() ([]models.Server, error)
 }
 
 type store struct {
@@ -47,6 +48,17 @@ func (s *store) CreateServer(name, userId string) error {
 	}
 
 	return nil
+}
+
+func (s *store) GetServers() ([]models.Server, error) {
+	rows, _ := s.db.Query(context.Background(), `select id, created_at as createdAt, name, owner as ownerId from servers`)
+	servers, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Server])
+	if err != nil {
+		log.Println("unable to fetch servers: ", err.Error())
+		return []models.Server{}, err
+	}
+
+	return servers, nil
 }
 
 func (s *store) CreateUser(id, username string) error {

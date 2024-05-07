@@ -1,6 +1,9 @@
 package server
 
-import "ivar/pkg/database"
+import (
+	"ivar/pkg/database"
+	"ivar/pkg/models"
+)
 
 type Service struct {
 	Store database.Store
@@ -12,4 +15,8 @@ func (s *Service) CreateServer(name, userId string) error {
 	}
 
 	return nil
+}
+
+func (s *Service) GetServers() ([]models.Server, error) {
+	return s.Store.GetServers()
 }

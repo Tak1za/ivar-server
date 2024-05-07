@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 )
 
 type Controller interface {
@@ -23,20 +22,13 @@ type Controller interface {
 	GetMessages(ctx *gin.Context)
 	GetAllChats(ctx *gin.Context)
 	CreateServer(ctx *gin.Context)
+	GetServers(ctx *gin.Context)
 }
 
 type controller struct {
 	userService   *user.Service
 	chatService   *chat.Service
 	serverService *server.Service
-}
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024 * 1024 * 1024,
-	WriteBufferSize: 1024 * 1024 * 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
 }
 
 func New(userService *user.Service, chatService *chat.Service, serverService *server.Service) *controller {
@@ -60,6 +52,16 @@ func (c *controller) CreateServer(ctx *gin.Context) {
 	}
 
 	ctx.Status(http.StatusCreated)
+}
+
+func (c *controller) GetServers(ctx *gin.Context) {
+	res, err := c.serverService.GetServers()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting servers"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": res})
 }
 
 func (c *controller) CreateUser(ctx *gin.Context) {

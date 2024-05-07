@@ -203,6 +203,7 @@ func main() {
 	r.POST("/api/v1/chats/info", ctrl.GetChatInfo)
 	r.GET("/api/v1/chats/:userId", ctrl.GetAllChats)
 	r.POST("/api/v1/servers", ctrl.CreateServer)
+	r.GET("/api/v1/servers", ctrl.GetServers)
 
 	if err := r.Run(":8080"); err != nil {
 		panic("error creating server: " + err.Error())
