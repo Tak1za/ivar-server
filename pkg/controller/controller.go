@@ -5,7 +5,9 @@ import (
 	"ivar/pkg/models"
 	"ivar/pkg/server"
 	"ivar/pkg/user"
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,6 +25,7 @@ type Controller interface {
 	GetAllChats(ctx *gin.Context)
 	CreateServer(ctx *gin.Context)
 	GetServers(ctx *gin.Context)
+	CreateInvite(ctx *gin.Context)
 }
 
 type controller struct {
@@ -189,4 +192,27 @@ func (c *controller) GetAllChats(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"data": chats})
+}
+
+func (c *controller) CreateInvite(ctx *gin.Context) {
+	serverId, _ := ctx.Params.Get("serverId")
+
+	id, err := strconv.Atoi(serverId)
+	if err != nil {
+		log.Println("bad serverId: " + err.Error())
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "bad server id"})
+		return
+	}
+
+	inviteCode, err := c.serverService.CreateInvite(id)
+	if err != nil {
+		if err.Error() == "invalid server" {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid server"})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error generating invite"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": inviteCode})
 }

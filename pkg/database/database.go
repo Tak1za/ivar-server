@@ -2,8 +2,10 @@ package database
 
 import (
 	"context"
+	"errors"
 	"ivar/pkg/models"
 	"log"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -23,6 +25,8 @@ type Store interface {
 	AllChats(userId string) ([]models.User, error)
 	CreateServer(name, userId string) error
 	GetServers() ([]models.Server, error)
+	GetInvite(serverId int) (string, error)
+	StoreInvite(code string, serverId int) error
 }
 
 type store struct {
@@ -160,13 +164,13 @@ func (s *store) RemoveFriend(currentUserId, toRemoveUserId string) error {
   	where
 	(
 	  f.user_a = @userA
-	  and 
+	  and
 	  f.user_b = @userB
 	)
 	or
 	(
 	  f.user_a = @userB
-	  and 
+	  and
 	  f.user_b = @userA
 	)`
 	args := pgx.NamedArgs{
@@ -228,10 +232,10 @@ func (s *store) AllChats(userId string) ([]models.User, error) {
 	)
   	from
 		messages m
-		inner join 
+		inner join
 		users u
-		on 
-		u.id = m.sender_id 
+		on
+		u.id = m.sender_id
 		or
 		u.id = m.recipient_id
   	where (m.sender_id = $1 or m.recipient_id = $1) and u.id <> $1`, userId)
@@ -246,4 +250,37 @@ func (s *store) AllChats(userId string) ([]models.User, error) {
 	}
 
 	return chats, nil
+}
+
+func (s *store) GetInvite(serverId int) (string, error) {
+	row, _ := s.db.Query(context.Background(), "select * from invites where server_id = $1", serverId)
+	invite, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.Invite])
+	if err != nil {
+		if !errors.Is(pgx.ErrNoRows, err) {
+			log.Println("unable to fetch row: " + err.Error())
+			return "", err
+		}
+		log.Println("no row found")
+		return "", nil
+	}
+
+	return invite.Code, nil
+}
+
+func (s *store) StoreInvite(code string, serverId int) error {
+	query := "insert into invites (code, server_id) values (@code, @serverId)"
+	args := pgx.NamedArgs{
+		"code":     code,
+		"serverId": serverId,
+	}
+
+	if _, err := s.db.Exec(context.Background(), query, args); err != nil {
+		log.Println("unable to insert row: " + err.Error())
+		if strings.Contains(err.Error(), "violates foreign key") {
+			return errors.New("invalid server")
+		}
+		return err
+	}
+
+	return nil
 }
