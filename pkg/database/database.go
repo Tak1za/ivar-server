@@ -25,8 +25,9 @@ type Store interface {
 	AllChats(userId string) ([]models.User, error)
 	CreateServer(name, userId string) error
 	GetServers() ([]models.Server, error)
-	GetInvite(serverId int) (string, error)
+	GetInvite(serverId int) (models.Invite, error)
 	StoreInvite(code string, serverId int) error
+	DeleteInvite(serverId int) error
 }
 
 type store struct {
@@ -252,19 +253,19 @@ func (s *store) AllChats(userId string) ([]models.User, error) {
 	return chats, nil
 }
 
-func (s *store) GetInvite(serverId int) (string, error) {
+func (s *store) GetInvite(serverId int) (models.Invite, error) {
 	row, _ := s.db.Query(context.Background(), "select * from invites where server_id = $1", serverId)
 	invite, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.Invite])
 	if err != nil {
 		if !errors.Is(pgx.ErrNoRows, err) {
 			log.Println("unable to fetch row: " + err.Error())
-			return "", err
+			return models.Invite{}, err
 		}
 		log.Println("no row found")
-		return "", nil
+		return models.Invite{}, nil
 	}
 
-	return invite.Code, nil
+	return invite, nil
 }
 
 func (s *store) StoreInvite(code string, serverId int) error {
@@ -279,6 +280,20 @@ func (s *store) StoreInvite(code string, serverId int) error {
 		if strings.Contains(err.Error(), "violates foreign key") {
 			return errors.New("invalid server")
 		}
+		return err
+	}
+
+	return nil
+}
+
+func (s *store) DeleteInvite(serverId int) error {
+	query := "delete from invites where invites.server_id = @serverId"
+	args := pgx.NamedArgs{
+		"serverId": serverId,
+	}
+
+	if _, err := s.db.Exec(context.Background(), query, args); err != nil {
+		log.Println("unable to delete row: " + err.Error())
 		return err
 	}
 

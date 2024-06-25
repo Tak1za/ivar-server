@@ -216,3 +216,36 @@ func (c *controller) CreateInvite(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{"data": inviteCode})
 }
+
+func (c *controller) ValidateInvite(ctx *gin.Context) {
+	code, _ := ctx.Params.Get("code")
+	if code == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invite code not found"})
+		return
+	}
+
+	serverId, _ := ctx.Params.Get("serverId")
+	if code == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "server id not found"})
+		return
+	}
+
+	id, err := strconv.Atoi(serverId)
+	if err != nil {
+		log.Println("bad serverId: " + err.Error())
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "bad server id"})
+		return
+	}
+
+	isValid, err := c.serverService.ValidateInvite(id, code)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error validating invite"})
+		return
+	}
+
+	if !isValid {
+		log.Println("invalid invite code")
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": isValid})
+}
